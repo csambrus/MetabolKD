@@ -27,17 +27,12 @@ else:
 # Forrás (Drive / közös cache): ha nincs a két .txt, ide töltjük le.
 GDRIVE_DATA = Path("/content/drive/MyDrive/MetabolKD/data")
 
+
 # =========================================================
 # Könyvtárak
 # =========================================================
-if IS_COLAB:
-    DATA_DIR = Path("/content/drive/MyDrive/MetabolKD/data")
-    OUTPUT_DIR = Path("/content/drive/MyDrive/MetabolKD/outputs")
-else:
-    DATA_DIR = PROJECT_ROOT / "data"
-    OUTPUT_DIR = PROJECT_ROOT / "outputs"
-                        
-RAW_DIR = DATA_DIR / "raw"
+DATA_DIR = PROJECT_ROOT / "data"
+OUTPUT_DIR = PROJECT_ROOT / "outputs"
 INTERIM_DIR = DATA_DIR / "interim"
 SPLITS_DIR = INTERIM_DIR / "splits"
 MODELS_DIR = INTERIM_DIR / "models"
