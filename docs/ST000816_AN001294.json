@@ -1,0 +1,523 @@
+{
+"METABOLOMICS WORKBENCH":{"STUDY_ID":"ST000816","ANALYSIS_ID":"AN001294","VERSION":"1","CREATED_ON":"July 31, 2017, 4:19 pm"},
+
+"PROJECT":{"PROJECT_TITLE":"Diabetes and Chronic Kidney Disease progression","PROJECT_TYPE":"MS analysis","PROJECT_SUMMARY":"Metabolomics of Chronic Kidney Disease progression","INSTITUTE":"University of Michigan","DEPARTMENT":"UMich Internal Medicine","LABORATORY":"Pennathur Lab","LAST_NAME":"Pennathur","FIRST_NAME":"Subramaniam","ADDRESS":"University Michigan, 2900 Huron Parkway, Ann Arbor, MI 48105","EMAIL":"spennath@umich.edu","PHONE":"734 615 5757"},
+
+"STUDY":{"STUDY_TITLE":"Lipidomics of Chronic Kidney Disease progression","STUDY_TYPE":"MS analysis","STUDY_SUMMARY":"Analysis of blood plasma lipid composition in patients with diabetic kidney disease In this untargeted lipidomics study we are comparing the lipidomics profile of progressors versus nonprogressors. A subgroup of patients have a follow up samples and therefore their baseline data are comared to the follow up visit data.","INSTITUTE":"University of Michigan","DEPARTMENT":"Biomedical Research Core Facilities","LABORATORY":"Metabolomics core","LAST_NAME":"Kachman","FIRST_NAME":"Maureen","ADDRESS":"6300 Brehm Tower, 1000 Wall Street, Ann Arbor, MI 48105-5714","EMAIL":"mkachman@med.umich.edu","PHONE":"(734) 232-8175","NUM_GROUPS":"5","TOTAL_SUBJECTS":"80"},
+
+"SUBJECT":{"SUBJECT_TYPE":"HUMAN","SUBJECT_SPECIES":"Homo sapiens","TAXONOMY_ID":"9606"},
+"SUBJECT_SAMPLE_FACTORS":[
+{
+"Subject ID":"SU0019930",
+"Sample ID":"S00017985",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019930",
+"Sample ID":"S00017986",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019931",
+"Sample ID":"S00017987",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019931",
+"Sample ID":"S00017988",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019932",
+"Sample ID":"S00017989",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019932",
+"Sample ID":"S00017990",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019933",
+"Sample ID":"S00017991",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019933",
+"Sample ID":"S00017992",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019934",
+"Sample ID":"S00017993",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019934",
+"Sample ID":"S00017994",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019935",
+"Sample ID":"S00017995",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019935",
+"Sample ID":"S00017996",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019936",
+"Sample ID":"S00017997",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019936",
+"Sample ID":"S00017998",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019937",
+"Sample ID":"S00017999",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019937",
+"Sample ID":"S00018000",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019938",
+"Sample ID":"S00018001",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019938",
+"Sample ID":"S00018002",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019939",
+"Sample ID":"S00018003",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019939",
+"Sample ID":"S00018004",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019940",
+"Sample ID":"S00018005",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019940",
+"Sample ID":"S00018006",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019941",
+"Sample ID":"S00018007",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019941",
+"Sample ID":"S00018008",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019942",
+"Sample ID":"S00018009",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019942",
+"Sample ID":"S00018010",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019943",
+"Sample ID":"S00018011",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019943",
+"Sample ID":"S00018012",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019944",
+"Sample ID":"S00018013",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019944",
+"Sample ID":"S00018014",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019945",
+"Sample ID":"S00018015",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019945",
+"Sample ID":"S00018016",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019946",
+"Sample ID":"S00018017",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019946",
+"Sample ID":"S00018018",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019947",
+"Sample ID":"S00018019",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019947",
+"Sample ID":"S00018020",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019948",
+"Sample ID":"S00018021",
+"Factors":{"Progressors":"Non-progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019948",
+"Sample ID":"S00018022",
+"Factors":{"Progressors":"Non-progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019949",
+"Sample ID":"S00018023",
+"Factors":{"Progressors":"Progressor","Visit":"Baseline"}
+},
+{
+"Subject ID":"SU0019949",
+"Sample ID":"S00018024",
+"Factors":{"Progressors":"Progressor","Visit":"Followup"}
+},
+{
+"Subject ID":"SU0019950",
+"Sample ID":"S00018025",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019951",
+"Sample ID":"S00018026",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019952",
+"Sample ID":"S00018027",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019953",
+"Sample ID":"S00018028",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019954",
+"Sample ID":"S00018029",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019955",
+"Sample ID":"S00018030",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019956",
+"Sample ID":"S00018031",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019957",
+"Sample ID":"S00018032",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019958",
+"Sample ID":"S00018033",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019959",
+"Sample ID":"S00018034",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019960",
+"Sample ID":"S00018035",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019961",
+"Sample ID":"S00018036",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019962",
+"Sample ID":"S00018037",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019963",
+"Sample ID":"S00018038",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019964",
+"Sample ID":"S00018039",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019965",
+"Sample ID":"S00018040",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019966",
+"Sample ID":"S00018041",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019967",
+"Sample ID":"S00018042",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019968",
+"Sample ID":"S00018043",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019969",
+"Sample ID":"S00018044",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019970",
+"Sample ID":"S00018045",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019971",
+"Sample ID":"S00018046",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019972",
+"Sample ID":"S00018047",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019973",
+"Sample ID":"S00018048",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019974",
+"Sample ID":"S00018049",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019975",
+"Sample ID":"S00018050",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019976",
+"Sample ID":"S00018051",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019977",
+"Sample ID":"S00018052",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019978",
+"Sample ID":"S00018053",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019979",
+"Sample ID":"S00018054",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019980",
+"Sample ID":"S00018055",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019981",
+"Sample ID":"S00018056",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019982",
+"Sample ID":"S00018057",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019983",
+"Sample ID":"S00018058",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019984",
+"Sample ID":"S00018059",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019985",
+"Sample ID":"S00018060",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019986",
+"Sample ID":"S00018061",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019987",
+"Sample ID":"S00018062",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019988",
+"Sample ID":"S00018063",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019989",
+"Sample ID":"S00018064",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019990",
+"Sample ID":"S00018065",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019991",
+"Sample ID":"S00018066",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019992",
+"Sample ID":"S00018067",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019993",
+"Sample ID":"S00018068",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019994",
+"Sample ID":"S00018069",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019995",
+"Sample ID":"S00018070",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019996",
+"Sample ID":"S00018071",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019997",
+"Sample ID":"S00018072",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019998",
+"Sample ID":"S00018073",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0019999",
+"Sample ID":"S00018074",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020000",
+"Sample ID":"S00018075",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020001",
+"Sample ID":"S00018076",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020002",
+"Sample ID":"S00018077",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020003",
+"Sample ID":"S00018078",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020004",
+"Sample ID":"S00018079",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020005",
+"Sample ID":"S00018080",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020006",
+"Sample ID":"S00018081",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020007",
+"Sample ID":"S00018082",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020008",
+"Sample ID":"S00018083",
+"Factors":{"Progressors":"Non-progressor","Visit":"NA"}
+},
+{
+"Subject ID":"SU0020009",
+"Sample ID":"S00018084",
+"Factors":{"Progressors":"Progressor","Visit":"NA"}
+}
+],
+"COLLECTION":{"COLLECTION_SUMMARY":"-"},
+
+"TREATMENT":{"TREATMENT_SUMMARY":"-"},
+
+"SAMPLEPREP":{"SAMPLEPREP_SUMMARY":"-","SAMPLEPREP_PROTOCOL_FILENAME":"A004 - Shotgun Lipidomics.pdf"},
+
+"CHROMATOGRAPHY":{"CHROMATOGRAPHY_TYPE":"Reversed phase","INSTRUMENT_NAME":"ABI Sciex 5600+ TripleTOF","COLUMN_NAME":"Waters Acquity HSS T3 (50 x 2.1mm, 1.8um)"},
+
+"ANALYSIS":{"ANALYSIS_TYPE":"MS","ANALYSIS_PROTOCOL_FILE":"A004 - Shotgun Lipidomics.pdf"},
+
+"MS":{"MS_COMMENTS":"-","INSTRUMENT_NAME":"ABI Sciex 5600+ TripleTOF","INSTRUMENT_TYPE":"TOF","MS_TYPE":"ESI","ION_MODE":"POSITIVE","MS_RESULTS_FILE":"ST000816_AN001294_Results.txt UNITS:peak area"}
+
+}

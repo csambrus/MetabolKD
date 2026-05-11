@@ -1,0 +1,12 @@
+tensorflow[and-cuda]
+keras
+torch
+numpy
+pandas
+scikit-learn
+matplotlib
+opencv-python
+pillow
+tqdm
+ipywidgets
+jupyterlab_widgets
