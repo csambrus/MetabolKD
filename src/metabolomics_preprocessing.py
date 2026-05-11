@@ -31,6 +31,52 @@ def log1p_df(X: pd.DataFrame) -> pd.DataFrame:
     return np.log1p(X.astype(float).clip(lower=0).fillna(0))
 
 
+def pqn_normalize(
+    X: pd.DataFrame,
+    *,
+    reference: str = "median",
+    eps: float = 1e-9,
+) -> pd.DataFrame:
+    """
+    Probabilistic Quotient Normalization (Dieterle et al., 2006) — mint a
+    ``NMR_Metabolomika_Pipeline_v2`` referencia cellában.
+    """
+    arr = np.maximum(X.astype(float).to_numpy(), eps)
+    integrals = arr.sum(axis=1, keepdims=True)
+    xn = arr / integrals
+    ref = np.median(xn, axis=0) if reference == "median" else xn.mean(axis=0)
+    ref = np.maximum(ref, eps)
+    quotients = xn / ref
+    dilution = np.median(quotients, axis=1, keepdims=True)
+    out = xn / dilution
+    return pd.DataFrame(out, index=X.index, columns=X.columns)
+
+
+def nmr_style_matrices(
+    X_raw: pd.DataFrame,
+    *,
+    impute_first: bool = True,
+) -> dict[str, pd.DataFrame]:
+    """
+    Ugyanaz a logika, mint az NMR notebook 2.4 fejezetében:
+
+    - ``X_raw`` : imputált (opcionális) numerikus mátrix
+    - ``X_pqn`` : PQN a (nem negatív) értékeken
+    - ``X_log`` : ``log1p(X_raw)`` — vulkán / univariáns gyakran ezen
+    - ``X_pareto`` : Pareto-skálázás a ``log1p`` mátrixon — PCA / PLS-DA
+    """
+    x0 = impute_half_minimum(X_raw) if impute_first else X_raw.astype(float).copy()
+    x_pqn = pqn_normalize(x0.clip(lower=0).fillna(0))
+    x_log = log1p_df(x0)
+    x_pareto = pareto_scale_columns(x_log)
+    return {
+        "X_raw": x0,
+        "X_pqn": x_pqn,
+        "X_log": x_log,
+        "X_pareto": x_pareto,
+    }
+
+
 def pareto_scale_columns(X: pd.DataFrame) -> pd.DataFrame:
     """Oszloponként középre igazítás, majd osztás sqrt(std)-del (Pareto-skálázás)."""
     Xf = X.astype(float)
