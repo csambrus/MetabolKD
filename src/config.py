@@ -25,7 +25,7 @@ else:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
                  
 # Forrás (Drive / közös cache): ha nincs a két .txt, ide töltjük le.
-GDRIVE_DATA = Path(os.environ.get("GDRIVE_DATA", PROJECT / "data"))
+GDRIVE_DATA = Path("/content/drive/MyDrive/MetabolKD/data")
 
 # =========================================================
 # Könyvtárak
