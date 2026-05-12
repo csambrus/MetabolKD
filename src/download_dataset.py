@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import html.parser
 import re
 import shutil
+import urllib.parse
+import urllib.request
 from pathlib import Path
 from typing import Literal
 
@@ -11,6 +14,200 @@ from src.config import DATA_DIR, GDRIVE_DATA
 
 
 STUDY_ID = "MTBLS28"
+
+# MetaboLights public FTP HTTP mirror
+MTBLS_PUBLIC_BASE = "https://ftp.ebi.ac.uk/pub/databases/metabolights/studies/public"
+
+ISA_FILE_RE = re.compile(r"^[isam]_.*\.(txt|tsv|csv)$", re.IGNORECASE)
+TABLE_FILE_RE = re.compile(r".*\.(txt|tsv|csv|xlsx)$", re.IGNORECASE)
+RAW_FILE_EXTENSIONS = {
+    ".raw", ".mzml", ".mzxml", ".cdf", ".netcdf", ".wiff", ".d", ".zip", ".gz",
+}
+
+
+class _HrefParser(html.parser.HTMLParser):
+    """Minimal HTML directory-listing parser for FTP-style index pages."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.hrefs: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "a":
+            return
+        attrs_dict = dict(attrs)
+        href = attrs_dict.get("href")
+        if href:
+            self.hrefs.append(href)
+
+
+def _download_if_missing(url: str, out_path: Path, *, timeout: int = 300) -> Path:
+    """Download url to out_path only if out_path does not exist or is empty."""
+    if out_path.exists() and out_path.stat().st_size > 0:
+        print(f"Már megvan, nem töltöm újra: {out_path}")
+        return out_path
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Letöltés: {url}")
+
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        out_path.write_bytes(response.read())
+
+    return out_path
+
+
+def _read_url_text(url: str, *, timeout: int = 120) -> str:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+
+def _study_base_url(study_id: str = STUDY_ID) -> str:
+    return f"{MTBLS_PUBLIC_BASE.rstrip('/')}/{study_id.strip('/')}/"
+
+
+def _quote_url_path_part(name: str) -> str:
+    return urllib.parse.quote(name, safe="/")
+
+
+def list_mtbls_study_files(study_id: str = STUDY_ID) -> list[str]:
+    """List top-level files in a public MetaboLights study directory (HTTP mirror)."""
+    base_url = _study_base_url(study_id)
+    html_text = _read_url_text(base_url)
+
+    parser = _HrefParser()
+    parser.feed(html_text)
+
+    files: list[str] = []
+    for href in parser.hrefs:
+        href = urllib.parse.unquote(href)
+
+        if not href or href.startswith("?") or href in {"../", "/"}:
+            continue
+
+        if href.endswith("/"):
+            continue
+
+        name = Path(href).name
+        if name and name not in files:
+            files.append(name)
+
+    if not files:
+        raise RuntimeError(
+            f"Nem sikerült fájllistát olvasni a MetaboLights FTP mappából: {base_url}"
+        )
+
+    return sorted(files)
+
+
+def _is_relevant_initial_file(name: str) -> bool:
+    base = Path(name).name
+    return bool(ISA_FILE_RE.match(base))
+
+
+def _is_small_table_reference(name: str) -> bool:
+    suffix = Path(str(name)).suffix.lower()
+    if suffix in RAW_FILE_EXTENSIONS:
+        return False
+    return bool(TABLE_FILE_RE.match(str(name)))
+
+
+def _read_any_table(path: Path) -> pd.DataFrame:
+    suffix = path.suffix.lower()
+
+    if suffix == ".xlsx":
+        return pd.read_excel(path, dtype=str)
+
+    if suffix == ".csv":
+        df = pd.read_csv(path, dtype=str)
+    else:
+        df = pd.read_csv(path, sep="\t", dtype=str)
+
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
+
+
+def _copy_tree_files(src_dir: Path, dst_dir: Path, filenames: list[str]) -> None:
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for name in filenames:
+        src = src_dir / name
+        dst = dst_dir / name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        print(f"Másolva → {dst}")
+
+
+def _download_selected_files_to_gdrive(
+    study_id: str,
+    gdrive_dir: Path,
+) -> list[str]:
+    """
+    Download ISA-tab and processed table files into gdrive_dir/study_id.
+
+    First downloads i_/s_/a_/m_ files. Then parses assay files and downloads
+    referenced small table files if present.
+    """
+    study_dir = gdrive_dir / study_id
+    study_dir.mkdir(parents=True, exist_ok=True)
+
+    base_url = _study_base_url(study_id)
+    all_top_files = list_mtbls_study_files(study_id)
+
+    selected = [f for f in all_top_files if _is_relevant_initial_file(f)]
+
+    if not selected:
+        raise RuntimeError(
+            f"Nem találtam ISA-tab fájlokat ({study_id}) alatt. "
+            f"Ellenőrizd kézzel a MetaboLights FTP mappát."
+        )
+
+    downloaded: set[str] = set()
+
+    for name in selected:
+        url = base_url + _quote_url_path_part(name)
+        _download_if_missing(url, study_dir / name)
+        downloaded.add(name)
+
+    referenced_tables: set[str] = set()
+    for name in list(downloaded):
+        if not Path(name).name.lower().startswith("a_"):
+            continue
+
+        assay_path = study_dir / name
+        try:
+            assay = _read_any_table(assay_path)
+        except Exception as exc:
+            print(f"Figyelem: nem tudtam olvasni az assay fájlt: {assay_path} ({exc})")
+            continue
+
+        for value in assay.astype(str).to_numpy().ravel():
+            value = str(value).strip()
+            if not value or value.lower() in {"nan", "none"}:
+                continue
+
+            if _is_small_table_reference(value):
+                referenced_tables.add(value)
+
+    for ref in sorted(referenced_tables):
+        if ref in downloaded:
+            continue
+
+        url = base_url + _quote_url_path_part(ref)
+        try:
+            _download_if_missing(url, study_dir / ref)
+            downloaded.add(ref)
+        except Exception as exc:
+            print(f"Figyelem: hivatkozott fájl nem tölthető: {ref} ({exc})")
+
+    return sorted(downloaded)
+
 
 REQUIRED_FILES = {
     "sample": "s_MTBLS28.txt",
@@ -66,8 +263,6 @@ def _ensure_local_study_dir(
     3. MetaboLights nyilvános FTP HTTP tükör: ISA-tab + hivatkozott táblák letöltése
        GDRIVE_DATA/<study_id>-be, majd másolás DATA_DIR/<study_id>-be
     """
-    from src.download_dataset import _copy_tree_files, _download_selected_files_to_gdrive
-
     gdrive_root = Path(gdrive_data or GDRIVE_DATA)
     data_root = Path(data_dir or DATA_DIR)
 
