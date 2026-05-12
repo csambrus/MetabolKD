@@ -30,7 +30,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from src.config import SEED
+from src.config import FIGURES_DIR, REPORTS_DIR, SEED
 
 HAS_XGBOOST = importlib.util.find_spec("xgboost") is not None
 
@@ -629,10 +629,26 @@ def plot_top_features(selected_features_df, model_name=None, top_n=20, output_pa
     return fig, axes
 
 
-def summarize_top_features(selected_features_df: pd.DataFrame, top_n: int = 20) -> pd.DataFrame:
+def summarize_top_features(
+    selected_features_df: pd.DataFrame,
+    top_n: int = 20,
+    sort_mode: str = "consensus",
+) -> pd.DataFrame:
     """
     Summarize top-feature outputs across models for quick interpretation.
     Returns one row per feature with cross-model coverage and average importance.
+
+    Parameters
+    ----------
+    selected_features_df : pd.DataFrame
+        Combined selected-feature table from benchmark models.
+    top_n : int
+        Number of top features to take from each model before aggregation.
+    sort_mode : str
+        Sorting mode for the output summary.
+        - "consensus" (default): model_count desc, mean_importance desc, best_rank asc
+        - "importance": mean_importance desc, model_count desc, best_rank asc
+        - "rank": best_rank asc, model_count desc, mean_importance desc
     """
     required_cols = {"model", "feature", "importance", "rank"}
     missing = required_cols - set(selected_features_df.columns)
@@ -653,9 +669,27 @@ def summarize_top_features(selected_features_df: pd.DataFrame, top_n: int = 20) 
             mean_importance=("importance", "mean"),
             best_rank=("rank", "min"),
         )
-        .sort_values(["model_count", "mean_importance", "best_rank"], ascending=[False, False, True])
-        .reset_index(drop=True)
     )
+
+    if sort_mode == "consensus":
+        summary = summary.sort_values(
+            ["model_count", "mean_importance", "best_rank"],
+            ascending=[False, False, True],
+        )
+    elif sort_mode == "importance":
+        summary = summary.sort_values(
+            ["mean_importance", "model_count", "best_rank"],
+            ascending=[False, False, True],
+        )
+    elif sort_mode == "rank":
+        summary = summary.sort_values(
+            ["best_rank", "model_count", "mean_importance"],
+            ascending=[True, False, False],
+        )
+    else:
+        raise ValueError("sort_mode must be one of: 'consensus', 'importance', 'rank'.")
+
+    summary = summary.reset_index(drop=True)
     return summary
 
 
@@ -670,7 +704,7 @@ class _Artifacts:
 def run_ml_benchmark(
     X,
     y,
-    output_dir="outputs/ml_benchmark",
+    output_dir=None,
     positive_label="Lung cancer",
     k_values=(50, 100, 200, 500),
     refit_on_train_valid=True,
@@ -698,11 +732,20 @@ def run_ml_benchmark(
         "positive_label": str(positive_label),
         "negative_label": "Control",
     }
-    out_dir = Path(output_dir)
-    out_conf = out_dir / "confusion_matrices"
-    out_top = out_dir / "top_features"
+    if output_dir is None:
+        out_reports = Path(REPORTS_DIR) / "ml_benchmark"
+        out_figures = Path(FIGURES_DIR) / "ml_benchmark"
+    else:
+        base = Path(output_dir)
+        out_reports = base
+        out_figures = base
+
+    out_dir = out_reports
+    out_conf = out_figures / "confusion_matrices"
+    out_top = out_figures / "top_features"
     out_conf.mkdir(parents=True, exist_ok=True)
     out_top.mkdir(parents=True, exist_ok=True)
+    out_reports.mkdir(parents=True, exist_ok=True)
     artifacts = _Artifacts(metrics=[], predictions=[], best_estimators={}, selected_features=[])
     model_pool = build_models()
     for model_name, model in model_pool.items():
@@ -783,15 +826,24 @@ def run_ml_benchmark(
         else pd.DataFrame(columns=["model", "feature", "importance", "rank", "selection_method"])
     )
     out_dir.mkdir(parents=True, exist_ok=True)
-    metrics_df.to_csv(out_dir / "ml_metrics.csv", index=False)
-    predictions_df.to_csv(out_dir / "ml_predictions.csv", index=False)
-    selected_features_df.to_csv(out_dir / "ml_selected_features.csv", index=False)
+    metrics_df.to_csv(out_reports / "ml_metrics.csv", index=False)
+    predictions_df.to_csv(out_reports / "ml_predictions.csv", index=False)
+    selected_features_df.to_csv(out_reports / "ml_selected_features.csv", index=False)
+    pd.DataFrame([split_info]).to_csv(out_reports / "ml_split_info.csv", index=False)
     if not metrics_df.empty:
-        plot_metric_comparison(metrics_df=metrics_df, metric="roc_auc", output_path=out_dir / "metric_comparison_roc_auc.png")
-        plot_metric_comparison(metrics_df=metrics_df, metric="f1", output_path=out_dir / "metric_comparison_f1.png")
+        plot_metric_comparison(
+            metrics_df=metrics_df,
+            metric="roc_auc",
+            output_path=out_figures / "metric_comparison_roc_auc.png",
+        )
+        plot_metric_comparison(
+            metrics_df=metrics_df,
+            metric="f1",
+            output_path=out_figures / "metric_comparison_f1.png",
+        )
         plot_confusion_matrices(metrics_df=metrics_df, output_dir=out_conf)
     if not predictions_df.empty:
-        plot_roc_curves(predictions_df=predictions_df, output_path=out_dir / "roc_curves_test.png")
+        plot_roc_curves(predictions_df=predictions_df, output_path=out_figures / "roc_curves_test.png")
     return {
         "metrics": metrics_df,
         "predictions": predictions_df,
