@@ -60,6 +60,34 @@ def random_forest_feature_importance(
     return pd.Series(rf.feature_importances_, index=X.columns, name="importance").sort_values(ascending=False)
 
 
+def plot_random_forest_feature_importance(
+    importance: pd.Series,
+    top_n: int = 25,
+    title: str | None = None,
+    output_path: str | Path | None = None,
+):
+    """Plot top random-forest feature importances from a Series."""
+    if not isinstance(importance, pd.Series):
+        raise TypeError("importance must be a pandas Series.")
+    if importance.empty:
+        raise ValueError("importance series is empty.")
+
+    top = importance.head(top_n).sort_values(ascending=True)
+    fig, ax = plt.subplots(figsize=(8, max(4, top_n * 0.32)))
+    ax.barh(top.index.astype(str), top.values)
+    ax.set_xlabel("Importance")
+    ax.set_ylabel("Feature")
+    ax.set_title(title or f"Random Forest feature importance (top {top_n})")
+    ax.grid(axis="x", alpha=0.25)
+    fig.tight_layout()
+
+    if output_path is not None:
+        out = Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out, dpi=220, bbox_inches="tight")
+    return fig, ax
+
+
 def _ensure_dataframe(X: pd.DataFrame | np.ndarray) -> pd.DataFrame:
     if isinstance(X, pd.DataFrame):
         return X.copy()
@@ -518,30 +546,62 @@ def plot_roc_curves(predictions_df, output_path=None):
 
 
 def plot_confusion_matrices(metrics_df, output_dir=None):
-    figs = []
-    for _, row in metrics_df.iterrows():
-        cm = np.array([[row["tn"], row["fp"]], [row["fn"], row["tp"]]], dtype=float)
-        row_sum = np.maximum(cm.sum(axis=1, keepdims=True), 1.0)
-        cm_norm = cm / row_sum
-        fig, ax = plt.subplots(figsize=(4.8, 4.2))
-        img = ax.imshow(cm_norm, cmap="Blues", vmin=0.0, vmax=1.0)
-        for i in range(2):
-            for j in range(2):
-                ax.text(j, i, f"{int(cm[i, j])}\n{cm_norm[i, j]*100:.1f}%", ha="center", va="center", fontsize=10)
-        ax.set_xticks([0, 1], labels=["Control", "Lung cancer"])
-        ax.set_yticks([0, 1], labels=["Control", "Lung cancer"])
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
-        ax.set_title(f"{row['model']} ({row['dataset']})")
-        fig.colorbar(img, ax=ax, fraction=0.046, pad=0.04)
-        fig.tight_layout()
-        figs.append(fig)
-        if output_dir is not None:
-            out_dir = Path(output_dir)
-            out_dir.mkdir(parents=True, exist_ok=True)
-            filename = f"cm_{row['model']}_{row['dataset']}.png".replace(" ", "_")
-            fig.savefig(out_dir / filename, dpi=220, bbox_inches="tight")
-    return figs
+    df = metrics_df.copy()
+    if df.empty:
+        raise ValueError("metrics_df is empty.")
+
+    models = sorted(df["model"].unique().tolist())
+    datasets = ["validation", "test"]
+
+    fig, axes = plt.subplots(
+        nrows=len(models),
+        ncols=2,
+        figsize=(10, max(4, 3.8 * len(models))),
+        squeeze=False,
+    )
+
+    imgs = []
+    for row_idx, model in enumerate(models):
+        for col_idx, dataset in enumerate(datasets):
+            ax = axes[row_idx, col_idx]
+            row = df[(df["model"] == model) & (df["dataset"] == dataset)]
+            if row.empty:
+                ax.axis("off")
+                ax.set_title(f"{model} ({dataset}) - nincs adat")
+                continue
+
+            row = row.iloc[0]
+            cm = np.array([[row["tn"], row["fp"]], [row["fn"], row["tp"]]], dtype=float)
+            row_sum = np.maximum(cm.sum(axis=1, keepdims=True), 1.0)
+            cm_norm = cm / row_sum
+            img = ax.imshow(cm_norm, cmap="Blues", vmin=0.0, vmax=1.0)
+            imgs.append(img)
+            for i in range(2):
+                for j in range(2):
+                    ax.text(
+                        j,
+                        i,
+                        f"{int(cm[i, j])}\n{cm_norm[i, j]*100:.1f}%",
+                        ha="center",
+                        va="center",
+                        fontsize=9,
+                    )
+            ax.set_xticks([0, 1], labels=["Control", "Lung cancer"])
+            ax.set_yticks([0, 1], labels=["Control", "Lung cancer"])
+            ax.set_xlabel("Predicted")
+            ax.set_ylabel("True")
+            ax.set_title(f"{model} ({dataset})")
+
+    if imgs:
+        fig.colorbar(imgs[0], ax=axes.ravel().tolist(), fraction=0.02, pad=0.02)
+    fig.tight_layout()
+
+    if output_dir is not None:
+        out_dir = Path(output_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "confusion_matrices_paired.png", dpi=220, bbox_inches="tight")
+
+    return fig, axes
 
 
 def plot_top_features(selected_features_df, model_name=None, top_n=20, output_path=None):
@@ -567,6 +627,36 @@ def plot_top_features(selected_features_df, model_name=None, top_n=20, output_pa
         out.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(out, dpi=220, bbox_inches="tight")
     return fig, axes
+
+
+def summarize_top_features(selected_features_df: pd.DataFrame, top_n: int = 20) -> pd.DataFrame:
+    """
+    Summarize top-feature outputs across models for quick interpretation.
+    Returns one row per feature with cross-model coverage and average importance.
+    """
+    required_cols = {"model", "feature", "importance", "rank"}
+    missing = required_cols - set(selected_features_df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in selected_features_df: {sorted(missing)}")
+
+    top = (
+        selected_features_df.copy()
+        .sort_values(["model", "rank"])
+        .groupby("model", as_index=False)
+        .head(top_n)
+    )
+
+    summary = (
+        top.groupby("feature", as_index=False)
+        .agg(
+            model_count=("model", "nunique"),
+            mean_importance=("importance", "mean"),
+            best_rank=("rank", "min"),
+        )
+        .sort_values(["model_count", "mean_importance", "best_rank"], ascending=[False, False, True])
+        .reset_index(drop=True)
+    )
+    return summary
 
 
 @dataclass
