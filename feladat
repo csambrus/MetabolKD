@@ -1,0 +1,353 @@
+A src.cxr mappában lévő függvények-hez hasonlók gyártásával, valamint az Aptos_cnn_hw1_run7.py-ben lévő logika felhaszálásával kérem a mostani pipeline folytatását.:
+
+A meglévő MetabolKD projektben készíts egy új validált ML benchmark modult a MTBLS28 LC–MS metabolomikai adatokhoz.
+
+Kontextus:
+
+* A notebookban már létezik adatbetöltés:
+
+  * `X_raw`: minta × feature intenzitásmátrix
+  * `meta`: metaadat tábla
+  * `y = meta["class_label"]`
+* A célváltozó bináris:
+
+  * pozitív osztály: `"Lung cancer"`
+  * negatív osztály: `"Control"`
+* A korábbi notebookban már van exploratív elemzés: QC, preprocessing, PCA, univariáns FDR/volcano, heatmap, PLS-DA/VIP/S-plot, gyors Random Forest feature importance.
+* Most egy új, validált prediktív ML-rész kell:
+  `## 5. Validált ML pipeline-ok: preprocessing, feature selection és modell-összehasonlítás`
+
+Feladat:
+Hozz létre egy új fájlt:
+
+`src/metabolomics_ml_benchmark.py`
+
+A modul célja:
+
+* train / validation / test split
+* leakage-mentes preprocessing
+* pipeline-on belüli feature selection
+* több ML-modell összehasonlítása
+* metrikák számítása
+* ábrák mentése
+* top feature-ök kinyerése
+
+Követelmények:
+
+1. Implementálj stratifikált train/validation/test bontást.
+
+Függvény:
+
+```python
+make_train_valid_test_split(
+    X,
+    y,
+    positive_label="Lung cancer",
+    test_size=0.15,
+    valid_size=0.15,
+    random_state=42,
+)
+```
+
+Elvárás:
+
+* `X` pandas DataFrame maradjon, a feature-nevek őrződjenek meg.
+* `y` legyen binárisan kódolva: Lung cancer = 1, Control = 0.
+* A split stratifikált legyen.
+* Térjen vissza:
+  `X_train, X_valid, X_test, y_train, y_valid, y_test`
+
+2. Készíts leakage-mentes sklearn-kompatibilis preprocessing pipeline-t.
+
+A preprocessing tartalmazza:
+
+* missing value imputáció: `SimpleImputer(strategy="median")`
+* mintánkénti normalizálás opcionálisan, például median sample normalization vagy total signal normalization
+* `log1p` transzformáció
+* alacsony varianciájú feature-ök eltávolítása: `VarianceThreshold`
+* skálázás: `StandardScaler` vagy Pareto-szerű skálázás
+
+Fontos:
+
+* Minden preprocessing lépés a pipeline-on belül legyen.
+* A `fit()` csak train adaton történjen.
+* Validation és test adaton csak `transform()` történjen.
+* Ne használjuk közvetlenül a notebookban korábban teljes adaton létrehozott `X_pareto` mátrixot a validált ML-ben.
+
+3. Implementálj pipeline-on belüli feature selectiont.
+
+Minimum:
+
+* `SelectKBest(f_classif)`
+
+K legyen paraméterezhető:
+
+```python
+k_values = [50, 100, 200, 500]
+```
+
+Opcionálisan:
+
+* L1-logisztikus regresszió alapú `SelectFromModel`
+
+4. Implementáld az alábbi modelleket:
+
+* Lasso:
+  `LogisticRegression(penalty="l1", solver="saga", class_weight="balanced")`
+
+* Ridge:
+  `LogisticRegression(penalty="l2", solver="saga" vagy "lbfgs", class_weight="balanced")`
+
+* Random Forest:
+  `RandomForestClassifier(class_weight="balanced", random_state=42)`
+
+* XGBoost:
+  `xgboost.XGBClassifier`
+  Ha az `xgboost` nincs telepítve, a kód ne omoljon össze, hanem adjon figyelmeztetést és hagyja ki az XGBoost modellt.
+  Ha szükséges, a `requirements.txt`-be vedd fel:
+  `xgboost`
+
+* Neural Network:
+  `MLPClassifier`
+  Javasolt:
+  `hidden_layer_sizes=(128, 64)`
+  `early_stopping=True`
+  `max_iter=500`
+  `random_state=42`
+
+5. Legyen egy központi függvény:
+
+```python
+run_ml_benchmark(
+    X,
+    y,
+    output_dir="outputs/ml_benchmark",
+    positive_label="Lung cancer",
+    random_state=42,
+    k_values=(50, 100, 200, 500),
+    refit_on_train_valid=True,
+)
+```
+
+A függvény:
+
+* elkészíti a train/valid/test splitet
+* felépíti a pipeline-okat
+* minden modellt több feature-k értékkel kipróbál
+* validációs ROC-AUC alapján kiválasztja a legjobb konfigurációt modellenként
+* opcionálisan újratanítja a legjobb konfigurációt train+valid adaton
+* egyszer értékeli test adaton
+* visszaad egy dictionary-t:
+
+  * `metrics`
+  * `predictions`
+  * `best_estimators`
+  * `selected_features`
+  * `split_info`
+
+6. Számítsd ki a következő metrikákat validation és test adaton:
+
+* ROC-AUC
+* accuracy
+* balanced accuracy
+* F1-score
+* sensitivity / recall
+* specificity
+* precision
+* confusion matrix
+
+Legyen külön függvény:
+
+```python
+evaluate_binary_classifier(
+    model,
+    X,
+    y,
+    dataset_name,
+    model_name,
+)
+```
+
+7. Készíts plot függvényeket:
+
+```python
+plot_metric_comparison(metrics_df, metric="roc_auc", output_path=None)
+plot_roc_curves(predictions_df, output_path=None)
+plot_confusion_matrices(metrics_df, output_dir=None)
+plot_top_features(selected_features_df, model_name=None, top_n=20, output_path=None)
+```
+
+Elvárás:
+
+* Matplotlibet használj.
+* Az ábrák legyenek publikációs jellegűek.
+* Minden ábra menthető legyen PNG-be.
+* Ne használj seaborn-t.
+
+8. Feature importance / selected features:
+
+Implementálj függvényt, amely modellenként kinyeri a legfontosabb feature-öket:
+
+```python
+extract_model_features(
+    fitted_pipeline,
+    original_feature_names,
+    model_name,
+    top_n=30,
+)
+```
+
+Támogatandó:
+
+* Lasso/Ridge: koefficiensek abszolút értéke
+* Random Forest: `feature_importances_`
+* XGBoost: `feature_importances_`
+* MLP: ha nincs natív importance, akkor legalább a kiválasztott SelectKBest feature-öket listázza score szerint
+
+Fontos:
+
+* A feature-nevek maradjanak visszakövethetők.
+* A visszatérési érték pandas DataFrame legyen:
+
+  * `model`
+  * `feature`
+  * `importance`
+  * `rank`
+  * `selection_method`
+
+9. Output fájlok:
+
+A `run_ml_benchmark` mentse ezeket:
+
+```text
+outputs/ml_benchmark/ml_metrics.csv
+outputs/ml_benchmark/ml_predictions.csv
+outputs/ml_benchmark/ml_selected_features.csv
+outputs/ml_benchmark/metric_comparison_roc_auc.png
+outputs/ml_benchmark/metric_comparison_f1.png
+outputs/ml_benchmark/roc_curves_test.png
+outputs/ml_benchmark/confusion_matrices/
+outputs/ml_benchmark/top_features/
+```
+
+10. Notebook-integráció:
+
+Adj a notebookhoz használható minimális példakódot:
+
+```python
+from src.metabolomics_ml_benchmark import run_ml_benchmark
+
+ml_results = run_ml_benchmark(
+    X_raw,
+    y,
+    output_dir="outputs/ml_benchmark_mtbls28",
+    positive_label="Lung cancer",
+    random_state=42,
+)
+
+metrics = ml_results["metrics"]
+metrics
+```
+
+Majd:
+
+```python
+from src.metabolomics_ml_benchmark import (
+    plot_metric_comparison,
+    plot_roc_curves,
+)
+
+plot_metric_comparison(metrics, metric="roc_auc")
+plot_metric_comparison(metrics, metric="f1")
+plot_roc_curves(ml_results["predictions"])
+```
+
+11. Kódstílus:
+
+* Legyen tiszta, jól kommentált, notebookból importálható.
+* Ne legyen CLI-kényszer.
+* Minden random state legyen 42.
+* Kezelje robusztusan a pandas DataFrame / numpy array bemeneteket.
+* Ne legyen adat-szivárgás.
+* A test setet csak a végső értékelésre használd.
+* A függvények ne írjanak túl sok felesleges outputot, de `verbose=True` paraméterrel lehessen státuszt kiírni.
+* A kód fusson GPU-n Colabban
+* Legyen optimalizált GPU-ra, ami csak lehet tensorflow-ban fusson!
+
+
+12. A meglévő exploratív feature selection eredményeket ne töröld. Az új ML-rész különüljön el tőlük. 
+A notebookban az ML rész sorrendje legyen:
+
+## 5. Validált ML pipeline-ok: preprocessing, feature selection és modell-összehasonlítás
+### 5.1 Feature selection stratégiák - ?
+Cél: Lung cancer vs Control klasszifikáció validált ML-pipeline-okkal.
+Bemenet: X_raw, y
+Pozitív osztály: Lung cancer
+Negatív osztály: Control
+ne az előre kiszámolt X_pareto-t használd elsődlegesen, hanem az X_raw-ból indulj ki. Az ML-pipeline-on belül történjen az imputáció, normalizálás, log-transzformáció, skálázás és feature selection. - lehetőleg minden GPU-ra optimalizált módon, tensorflow-ban
+
+### 5.2 Train / validation / test split
+70% train
+15% validation
+15% test
+
+### 5.3 Leakage-mentes preprocessing
+missing value kezelés
+mintánkénti normalizálás
+log1p transzformáció
+alacsony varianciájú feature-ök kiszűrése
+skálázás
+
+fit: csak train adaton
+transform: validation és test adaton
+
+### 5.4 Pipeline-on belüli feature selection
+SelectKBest(f_classif)
+L1-logisztikus regresszió alapú szelekció
+opcionálisan model-based selection RF/XGBoost alapján
+
+### 5.5 Modellek:
+5.5.1 Lasso: L1-regularizált logisztikus regresszió
+5.5.2 Ridge: L2-regularizált logisztikus regresszió
+5.5.3 Random Forest
+5.5.4 XGBoost
+5.5.5 Neural Network / MLP
+
+Minden modellnél:
+több hiperparaméter kipróbálása
+validációs ROC-AUC alapján legjobb konfiguráció kiválasztása
+legjobb modellek összehasonlítása
+
+Metrikák:
+ROC-AUC
+accuracy
+balanced accuracy
+F1-score
+sensitivity / recall
+specificity
+confusion matrix
+
+Vizualizáció legyen!:
+modell-összehasonlító barplot
+ROC-görbék egy ábrán
+confusion matrix a legjobb modellekre
+top feature importance / selected feature ábra
+
+Top feature-ök integrált táblázatban
+feature
+univariáns rang
+PLS-DA VIP rang
+RF exploratív rang
+Lasso kiválasztotta-e
+RF ML importance
+XGBoost importance
+
+### 5.6 Modell-összehasonlítás
+### 5.7 ROC-görbék és confusion matrixok
+### 5.8 ML-alapú top feature-ök
+
+
+------------------
+
+
+
