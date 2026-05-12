@@ -15,7 +15,9 @@ from src.config import LOGS_DIR
 def set_global_seed(seed: int = SEED) -> int:
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
+    np.random.seed(seed)
     tf.random.set_seed(seed)
+    tf.keras.utils.set_random_seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
