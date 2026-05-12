@@ -42,7 +42,6 @@ def random_forest_feature_importance(
     *,
     n_estimators: int = 300,
     max_depth: int | None = 12,
-    random_state: int = SEED,
     n_jobs: int = -1,
 ) -> pd.Series:
     """Fast exploratory RF importance for binary labels."""
@@ -53,7 +52,7 @@ def random_forest_feature_importance(
     rf = RandomForestClassifier(
         n_estimators=n_estimators,
         max_depth=max_depth,
-        random_state=random_state,
+        random_state=SEED,
         n_jobs=n_jobs,
         class_weight="balanced_subsample",
     )
@@ -270,20 +269,19 @@ def make_train_valid_test_split(
     positive_label="Lung cancer",
     test_size=0.15,
     valid_size=0.15,
-    random_state=SEED,
 ):
     X_df = _ensure_dataframe(X)
     y_s = _ensure_series(y, index=X_df.index)
     y_bin = _encode_binary_target(y_s, positive_label=positive_label)
     X_train_valid, X_test, y_train_valid, y_test = train_test_split(
-        X_df, y_bin, test_size=test_size, random_state=random_state, stratify=y_bin
+        X_df, y_bin, test_size=test_size, random_state=SEED, stratify=y_bin
     )
     valid_ratio_inside_train_valid = valid_size / (1.0 - test_size)
     X_train, X_valid, y_train, y_valid = train_test_split(
         X_train_valid,
         y_train_valid,
         test_size=valid_ratio_inside_train_valid,
-        random_state=random_state,
+        random_state=SEED,
         stratify=y_train_valid,
     )
     return X_train, X_valid, X_test, y_train, y_valid, y_test
@@ -314,7 +312,6 @@ def build_preprocess_pipeline(
 def build_feature_selector(
     method: str = "kbest",
     k: int = 100,
-    random_state: int = SEED,
 ) -> BaseEstimator:
     if method == "kbest":
         return SelectKBest(score_func=f_classif, k=k)
@@ -324,7 +321,7 @@ def build_feature_selector(
                 penalty="l1",
                 solver="saga",
                 class_weight="balanced",
-                random_state=random_state,
+                random_state=SEED,
                 max_iter=4000,
             ),
             threshold=-np.inf,
@@ -333,16 +330,16 @@ def build_feature_selector(
     raise ValueError(f"Unknown selector_method: {method}")
 
 
-def build_models(random_state: int = SEED) -> dict[str, BaseEstimator]:
+def build_models() -> dict[str, BaseEstimator]:
     models: dict[str, BaseEstimator] = {
         "lasso": LogisticRegression(
-            penalty="l1", solver="saga", class_weight="balanced", max_iter=4000, random_state=random_state
+            penalty="l1", solver="saga", class_weight="balanced", max_iter=4000, random_state=SEED
         ),
         "ridge": LogisticRegression(
-            penalty="l2", solver="lbfgs", class_weight="balanced", max_iter=4000, random_state=random_state
+            penalty="l2", solver="lbfgs", class_weight="balanced", max_iter=4000, random_state=SEED
         ),
         "random_forest": RandomForestClassifier(
-            n_estimators=500, class_weight="balanced", n_jobs=-1, random_state=random_state
+            n_estimators=500, class_weight="balanced", n_jobs=-1, random_state=SEED
         ),
         "mlp": TensorFlowMLPClassifier(
             hidden_layer_sizes=(128, 64),
@@ -355,7 +352,7 @@ def build_models(random_state: int = SEED) -> dict[str, BaseEstimator]:
             validation_split=0.15,
             class_weight=None,
             use_balanced_class_weight=True,
-            random_state=random_state,
+            random_state=SEED,
             verbose=0,
         ),
     }
@@ -371,7 +368,7 @@ def build_models(random_state: int = SEED) -> dict[str, BaseEstimator]:
                 max_depth=6,
                 subsample=0.9,
                 colsample_bytree=0.9,
-                random_state=random_state,
+                random_state=SEED,
                 tree_method="hist",
             )
         except Exception as exc:
@@ -585,7 +582,6 @@ def run_ml_benchmark(
     y,
     output_dir="outputs/ml_benchmark",
     positive_label="Lung cancer",
-    random_state=SEED,
     k_values=(50, 100, 200, 500),
     refit_on_train_valid=True,
     sample_normalization="median",
@@ -603,7 +599,6 @@ def run_ml_benchmark(
         positive_label=positive_label,
         test_size=0.15,
         valid_size=0.15,
-        random_state=random_state,
     )
     split_info = {
         "n_total": int(len(X_df)),
@@ -619,7 +614,7 @@ def run_ml_benchmark(
     out_conf.mkdir(parents=True, exist_ok=True)
     out_top.mkdir(parents=True, exist_ok=True)
     artifacts = _Artifacts(metrics=[], predictions=[], best_estimators={}, selected_features=[])
-    model_pool = build_models(random_state=random_state)
+    model_pool = build_models()
     for model_name, model in model_pool.items():
         if verbose:
             print(f"[INFO] model={model_name}")
@@ -634,7 +629,7 @@ def run_ml_benchmark(
             preprocess = build_preprocess_pipeline(
                 sample_normalization=sample_normalization, scaler=scaler, variance_threshold=variance_threshold
             )
-            selector = build_feature_selector(selector_method, k_eff, random_state=random_state)
+            selector = build_feature_selector(selector_method, k_eff)
             pipe = Pipeline(steps=[("preprocess", preprocess), ("selector", selector), ("model", model)])
             pipe.fit(X_train, y_train)
             valid_metrics, valid_preds = evaluate_binary_classifier(
@@ -652,12 +647,12 @@ def run_ml_benchmark(
         preprocess = build_preprocess_pipeline(
             sample_normalization=sample_normalization, scaler=scaler, variance_threshold=variance_threshold
         )
-        selector = build_feature_selector(selector_method, best_cfg["k"], random_state=random_state)
+        selector = build_feature_selector(selector_method, best_cfg["k"])
         best_model_pipeline = Pipeline(
             steps=[
                 ("preprocess", preprocess),
                 ("selector", selector),
-                ("model", build_models(random_state=random_state)[model_name]),
+                ("model", build_models()[model_name]),
             ]
         )
         if refit_on_train_valid:
