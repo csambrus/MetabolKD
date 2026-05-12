@@ -289,7 +289,7 @@ def make_train_valid_test_split(
     return X_train, X_valid, X_test, y_train, y_valid, y_test
 
 
-def _build_preprocess_pipeline(
+def build_preprocess_pipeline(
     sample_normalization: str = "median",
     scaler: str = "standard",
     variance_threshold: float = 0.0,
@@ -309,9 +309,13 @@ def _build_preprocess_pipeline(
             ("scaler", scaler_step),
         ]
     )
+    
 
-
-def _build_selector(method: str, k: int, random_state: int) -> BaseEstimator:
+def build_feature_selector(
+    method: str = "kbest",
+    k: int = 100,
+    random_state: int = SEED,
+) -> BaseEstimator:
     if method == "kbest":
         return SelectKBest(score_func=f_classif, k=k)
     if method == "l1":
@@ -329,7 +333,7 @@ def _build_selector(method: str, k: int, random_state: int) -> BaseEstimator:
     raise ValueError(f"Unknown selector_method: {method}")
 
 
-def _build_models(random_state: int = SEED) -> dict[str, BaseEstimator]:
+def build_models(random_state: int = SEED) -> dict[str, BaseEstimator]:
     models: dict[str, BaseEstimator] = {
         "lasso": LogisticRegression(
             penalty="l1", solver="saga", class_weight="balanced", max_iter=4000, random_state=random_state
@@ -375,6 +379,21 @@ def _build_models(random_state: int = SEED) -> dict[str, BaseEstimator]:
     else:
         warnings.warn("xgboost is unavailable; XGBoost model is skipped.", RuntimeWarning)
     return models
+
+
+def build_model_pipeline(
+    preprocess: Pipeline,
+    selector: BaseEstimator,
+    model: BaseEstimator,
+) -> Pipeline:
+    """Assemble full preprocessing + feature-selection + model pipeline."""
+    return Pipeline(
+        steps=[
+            ("preprocess", preprocess),
+            ("selector", selector),
+            ("model", model),
+        ]
+    )
 
 
 def evaluate_binary_classifier(model, X, y, dataset_name, model_name):
@@ -600,7 +619,7 @@ def run_ml_benchmark(
     out_conf.mkdir(parents=True, exist_ok=True)
     out_top.mkdir(parents=True, exist_ok=True)
     artifacts = _Artifacts(metrics=[], predictions=[], best_estimators={}, selected_features=[])
-    model_pool = _build_models(random_state=random_state)
+    model_pool = build_models(random_state=random_state)
     for model_name, model in model_pool.items():
         if verbose:
             print(f"[INFO] model={model_name}")
@@ -612,10 +631,10 @@ def run_ml_benchmark(
             k_eff = int(min(k, X_train.shape[1]))
             if k_eff <= 0:
                 continue
-            preprocess = _build_preprocess_pipeline(
+            preprocess = build_preprocess_pipeline(
                 sample_normalization=sample_normalization, scaler=scaler, variance_threshold=variance_threshold
             )
-            selector = _build_selector(selector_method, k_eff, random_state=random_state)
+            selector = build_feature_selector(selector_method, k_eff, random_state=random_state)
             pipe = Pipeline(steps=[("preprocess", preprocess), ("selector", selector), ("model", model)])
             pipe.fit(X_train, y_train)
             valid_metrics, valid_preds = evaluate_binary_classifier(
@@ -630,15 +649,15 @@ def run_ml_benchmark(
                 best_valid_preds = valid_preds
         if best_cfg is None or best_valid_metrics is None or best_valid_preds is None:
             continue
-        preprocess = _build_preprocess_pipeline(
+        preprocess = build_preprocess_pipeline(
             sample_normalization=sample_normalization, scaler=scaler, variance_threshold=variance_threshold
         )
-        selector = _build_selector(selector_method, best_cfg["k"], random_state=random_state)
+        selector = build_feature_selector(selector_method, best_cfg["k"], random_state=random_state)
         best_model_pipeline = Pipeline(
             steps=[
                 ("preprocess", preprocess),
                 ("selector", selector),
-                ("model", _build_models(random_state=random_state)[model_name]),
+                ("model", build_models(random_state=random_state)[model_name]),
             ]
         )
         if refit_on_train_valid:
