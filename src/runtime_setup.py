@@ -1,9 +1,9 @@
 # src/runtime_setup.py
 import os
 import multiprocessing
-import tensorflow as tf
 import numpy as np
 import random
+import tensorflow as tf
 import torch
 from src.config import SEED
 from datetime import datetime
@@ -14,8 +14,8 @@ from src.config import LOGS_DIR
 
 def set_global_seed(seed: int = SEED) -> int:
     os.environ["PYTHONHASHSEED"] = str(seed)
-    tf.random.set_seed(seed)
     random.seed(seed)
+    tf.random.set_seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
